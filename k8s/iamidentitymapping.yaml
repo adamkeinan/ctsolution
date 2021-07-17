@@ -1,0 +1,30 @@
+---
+users:
+- name: kubernetes-admin
+  user:
+    exec:
+      apiVersion: client.authentication.k8s.io/v1alpha1
+      command: aws-iam-authenticator
+      args:
+        - "token"
+        - "-i"
+        - "REPLACE_ME_WITH_YOUR_CLUSTER_ID"
+        - "-r"
+        - "REPLACE_ME_WITH_YOUR_ROLE_ARN"
+  # no client certificate/key needed here!
+---
+apiVersion: iamauthenticator.k8s.aws/v1alpha1
+kind: IAMIdentityMapping
+metadata:
+  name: kubernetes-admin
+spec:
+  # Arn of the User or Role to be allowed to authenticate
+  arn: arn:aws:iam::XXXXXXXXXXXX:user/KubernetesAdmin
+  # Username that Kubernetes will see the user as, this is useful for setting
+  # up allowed specific permissions for different users
+  username: kubernetes-admin
+  # Groups to be attached to your users/roles. For example `system:masters` to
+  # create cluster admin, or `system:nodes`, `system:bootstrappers` for nodes to
+  # access the API server.
+  groups:
+  - system:masters
