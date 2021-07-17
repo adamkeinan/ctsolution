@@ -47,3 +47,9 @@ Temporary Items
 .apdisk
 .DS_Store
 development.env
+*.pem
+*.pub
+./ssh/tfsKeyPair
+.ssh
+.ssh/**
+.aws

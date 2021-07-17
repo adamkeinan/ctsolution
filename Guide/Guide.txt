@@ -153,11 +153,11 @@ $ touch Dockerfile
 - Alternatively, We can launch it from the cli:
 $ docker build . -t weather-app --build-arg NODE_VERSION=14.7-alpine3.14 \ 
 > --build-arg ENV NODE_ENV=production \
-> --build-arg WORKDIR weather-app \ 
-> --build-arg COPY package.json /weather-app \
-> --build-arg COPY=package-lock.json /weather-app \
-> --build-arg RUN=npm install \
-> --build-arg COPY . /weather-app \
+> --build-arg WORKDIR weather-api \ 
+> --build-arg COPY /weather-api/package.json /weather-api \
+> --build-arg COPY /weather-api/package-lock.json /weather-api \
+> --build-arg RUN npm install \
+> --build-arg COPY . /weather-api \
 > --build-arg EXPOSE 8081 \
 > --build-arg ENV PORT 3005 \
 > --build-arg CMD node npm-start
@@ -177,6 +177,27 @@ $ docker logs <container id>
 - Now you can call your app using curl:
 $ curl -i localhost:3005
 
+- Now that we fetched Our repository, we are able to tag our docker image
+$ adam@ubuntu-dsk-1:~/repositories/ctsolution/Docker$ docker tag f6829c9b8412 adamkeinan/weather-app
+
+- Verify that the image contains the current tag that you used
+$ docker images
+REPOSITORY                    TAG                  IMAGE ID       CREATED         SIZE
+adamkeinan/weather-app        latest               f6829c9b8412   6 minutes ago   118MB
+node                          14.17.3-alpine3.14   4c6ef524cd6d   8 days ago      118MB
+httpd                         2.4                  30287d899656   3 weeks ago     138MB
+
+- And now we will tag it with our current version
+$ docker tag adamkeinan/weather-app weatherapp:v1
+REPOSITORY                    TAG                  IMAGE ID       CREATED          SIZE
+weatherapp                    v1                   f6829c9b8412   13 minutes ago   118MB
+adamkeinan/weather-app        latest               f6829c9b8412   13 minutes ago   118MB
+
+- Finnaly, we will push it to our registry with a new version: 
+$ docker push adamkeinan/weather-app:v1.0
+Using default tag: latest
+The push refers to repository [docker.io/adamkeinan/weather-app]
+## And our file is successfuly pushed to adamkeinan/weather-app:latest
 
 Deoloy a Microservice on your EKS Cluster
 ------------------------------------------
@@ -192,8 +213,36 @@ $ kubectl get pods -n robot-shop
 - You should be able to reach the app from your browser using the Kube master node's public IP:
 $ http://$kube_master_public_ip:30080
 
+Merging Our Changes With the remote server
+-------------------------------------------
+- Connect to the server via ssh
+$ ssh user@server_ip_address
+
+- Enter the cloned git repo directory
+$ cd ctsolution
+
+- Run the following command to fetch any changes
+$ git remote -v 
+origin  https://github.com/adamkeinan/ctsolution.git (fetch)
+origin  https://github.com/adamkeinan/ctsolution.git (push)
+
+$ git remote add upstream https://github.com/MY_GIT_USERNAME/ctsolution.git
 Scale up the MongoDB deployment to two replicas instead of just one
---------------------------------------------------------------------
+
+- Fetch your changes from the repo
+$ git fetch upstream  
+remote: Enumerating objects: 30, done.
+remote: Counting objects: 100% (30/30), done.
+remote: Compressing objects: 100% (22/22), done.
+remote: Total 27 (delta 2), reused 27 (delta 2), pack-reused 0
+Unpacking objects: 100% (27/27), 9.95 KiB | 254.00 KiB/s, done.
+From https://github.com/adamkeinan/ctsolution
+ * [new branch]      main       -> upstream/main
+
+- Now move youre changes and localize it
+$ git checkout main
+$ git merge upstream/main
+
 - Edit the deployment descriptor
 $ kubectl edit deployment mongodb -n robot-shop
 ## You should see some YAML describing the deployment object.
@@ -302,3 +351,65 @@ $ eksctl delete cluster EKS_CLUSTER_NAME
 ## Conclusion
 -----------
 We were able to successfully completing this hands-on lab
+
+Using Ansible and Terraform to manage piplines over different Availability Zones
+---------------------------------------------------------------------------------
+## Setup Requirements
+- We will strat by ssh into our ec2_user@addrees.amazon.com
+
+- Get The Latest Terraform binary 
+$ sudo yum install -y yum-utils
+$ sudo yum-config-manager --add-repo https://rpm.releases.hashicorp.com/AmazonLinux/hashicorp.repo
+$ sudo yum -y install terraform
+$ terraform -help
+
+- Python3 & PIP needs to be installed on all nodes.you can verify by applyng the following commands:
+# yum -y install python3-pip
+[ec2-user@ip-ADDRESS ~]$ python --version
+Python 2.7.18
+[ec2-user@ip-ADDRESS ~]$ python3 --version
+Python 3.7.10
+
+- Ansible (install via pip) # pip3 install ansible --user
+- AWS CLI (install via pip) # pip3 install awscli --user 
+- jq (install via package manager) - OPTIONAL # sudo yum -y install jq
+
+- We'll contunue by creating our Backend service using AWS S3API
+$ aws s3api create-bucket --bucket eksbackend --region eu-west-1 LocationConstraint=eu-west-1
+{
+    location: "/eksbackend"
+}
+
+- Copy the bucket name. Edit the backend.tf file and replace the bucket value for the bucket variable with your unique bucket name
+
+- Now we will tag our s3 bucket
+$ aws s3api put-bucket-tagging --bucket my-bucket --tagging 'TagSet=[{Key=PROD_ENV,Value=Production}]'
+
+Configure Route 53 Public DNS
+- Assuming you have a basic aws company/lab working domain, we can display the domain name:
+$ aws route53 list-hosted-zones | jq -r .HostedZones[].Name | egrep "CLUSTER_NAME*"
+eksclusterlab.com.
+us-east-1.ekscluster.com.
+eu-west-1.ekscluster.com.
+
+- Copy the result of the previous command and edit the variables.tf file.
+$ vim variables.tf 
+
+- Navigate to the variable "dns-name" stanza and replace the text "<public-hosted-zone-ending-with-dot>" 
+with the domain name we copied earlier. Be sure to include the . at the end of the domain name
+
+- Create the key pair, pressing Enter three times after running the command to accept the defaults:
+$ ssh-keygen -t rsa
+
+Deploying the Terraform Code
+- Initialize the Terraform directory you changed into to download the required provider:
+$ terraform init
+
+- Ensure Terraform code is properly formatted:
+$ terraform fmt
+
+- Ensure code has proper syntax and no errors:
+$ terraform validate
+
+- See the execution plan and note the number of resources that will be created:
+terraform plan
