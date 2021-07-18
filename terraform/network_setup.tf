@@ -1,7 +1,7 @@
 #Create VPC in eu-west-1
 resource "aws_vpc" "vpc_master" {
   provider             = aws.region-master
-  cidr_block           = "192.168.0.0/16"
+  cidr_block           = "10.126.0.0/16"
   enable_dns_support   = true
   enable_dns_hostnames = true
   tags = {
@@ -13,7 +13,7 @@ resource "aws_vpc" "vpc_master" {
 #Create VPC in us-west-2
 resource "aws_vpc" "vpc_master_oregon" {
   provider             = aws.region-worker
-  cidr_block           = "172.31.0.0/16"
+  cidr_block           = "172.78.0.0/16"
   enable_dns_support   = true
   enable_dns_hostnames = true
   tags = {
@@ -60,7 +60,7 @@ resource "aws_route_table" "internet_route" {
     gateway_id = aws_internet_gateway.igw.id
   }
   route {
-    cidr_block                = "192.168.1.0/24"
+    cidr_block                = "10.126.0.0/16"
     vpc_peering_connection_id = aws_vpc_peering_connection.useast1-uswest2.id
   }
   lifecycle {
@@ -88,7 +88,7 @@ resource "aws_subnet" "subnet_1" {
   provider          = aws.region-master
   availability_zone = element(data.aws_availability_zones.azs.names, 0)
   vpc_id            = aws_vpc.vpc_master.id
-  cidr_block        = "10.0.1.0/24"
+  cidr_block        = "10.126.0.0/16"
 }
 
 #Create subnet #2  in eu-west-1
@@ -96,7 +96,7 @@ resource "aws_subnet" "subnet_2" {
   provider          = aws.region-master
   vpc_id            = aws_vpc.vpc_master.id
   availability_zone = element(data.aws_availability_zones.azs.names, 1)
-  cidr_block        = "10.0.2.0/24"
+  cidr_block        = "10.126.0.0/16"
 }
 
 
@@ -104,11 +104,11 @@ resource "aws_subnet" "subnet_2" {
 resource "aws_subnet" "subnet_1_oregon" {
   provider   = aws.region-worker
   vpc_id     = aws_vpc.vpc_master_oregon.id
-  cidr_block = "192.168.1.0/24"
+  cidr_block = "172.78.1.0/16"
 }
 
 #Create route table in us-west-2
-resource "aws_route_table" "internet_route_ireland" {
+resource "aws_route_table" "internet_route_oregon" {
   provider = aws.region-worker
   vpc_id   = aws_vpc.vpc_master_oregon.id
   route {
@@ -116,7 +116,7 @@ resource "aws_route_table" "internet_route_ireland" {
     gateway_id = aws_internet_gateway.igw-oregon.id
   }
   route {
-    cidr_block                = "10.0.1.0/24"
+    cidr_block                = "172.78.0.0/16"
     vpc_peering_connection_id = aws_vpc_peering_connection.useast1-uswest2.id
   }
   lifecycle {
@@ -160,7 +160,7 @@ resource "aws_security_group" "jenkins-sg" {
     from_port   = 0
     to_port     = 0
     protocol    = "-1"
-    cidr_blocks = ["192.168.1.0/24"]
+    cidr_blocks = ["10.126.0.0/16"]
   }
   egress {
     from_port   = 0
@@ -217,7 +217,7 @@ resource "aws_security_group" "jenkins-sg-oregon" {
     from_port   = 0
     to_port     = 0
     protocol    = "-1"
-    cidr_blocks = ["10.0.1.0/24"]
+    cidr_blocks = ["172.78.0.0/16"]
   }
   egress {
     from_port   = 0

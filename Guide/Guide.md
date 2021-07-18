@@ -661,6 +661,12 @@ Deploying the Terraform Code
 - Initialize the Terraform directory you changed into to download the required provider:
 
 $ terraform init
+Terraform has been successfully initialized!
+
+You may now begin working with Terraform. Try running "terraform plan" to see
+any changes that are required for your infrastructure. All Terraform commands
+should now work.
+
 
 - Ensure Terraform code is properly formatted:
 
@@ -669,11 +675,13 @@ $ terraform fmt
 - Ensure code has proper syntax and no errors:
 
 $ terraform validate
+Success! The configuration is valid.
 
 - See the execution plan and note the number of resources that will be created:
 
 $ terraform plan
-
+Terraform used the selected providers to generate the following execution plan. Resource actions are indicated with the following symbols:
+  + create
 ## Conclusion
 
 - We were able to successfully completing this hands-on lab

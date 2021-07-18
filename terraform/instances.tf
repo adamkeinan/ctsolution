@@ -5,7 +5,7 @@ data "aws_ssm_parameter" "linuxAmi" {
 }
 
 #Get Linux AMI ID using SSM Parameter endpoint in us-west-2
-data "aws_ssm_parametdder" "linuxAmiVirginia" {
+data "aws_ssm_parameter" "linuxAmiOregon" {
   provider = aws.region-worker
   name     = "/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2"
 }
@@ -58,7 +58,7 @@ resource "aws_instance" "jenkins-worker-oregon" {
   provisioner "remote-exec" {
     when = destroy
     inline = [
-      "java -jar /home/ec2-user/jenkins-cli.jar -auth @/home/ec2-user/jenkins_auth -s http://${aws_instance.jenkins-master.private_ip}:8080 -auth @/home/ec2-user/jenkins_auth delete-node ${self.private_ip}"
+      "java -jar /home/ec2-user/jenkins-cli.jar -auth @/home/ec2-user/jenkins_auth -s http://${self.private_ip}:8080 -auth @/home/ec2-user/jenkins_auth delete-node ${self.private_ip}"
     ]
     connection {
       type        = "ssh"
