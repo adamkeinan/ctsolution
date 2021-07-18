@@ -5,14 +5,14 @@
   tasks:
     - name: Generate SSH Keypair
       openssh_keypair:
-        path: /home/ec2-user/.ssh/id_rsa
+        path: /home/ec2-user/.ssh/jenkins_rsa
         type: rsa
         size: 2048
         group: ec2-user
         owner: ec2-user
     
     - name: Add own key to authorized_keys file
-      shell: "cat /home/ec2-user/.ssh/id_rsa.pub >> /home/ec2-user/.ssh/authorized_keys && chmod 600 /home/ec2-user/.ssh/authorized_keys"
+      shell: "cat /home/ec2-user/.ssh/jenkins_rsa.pub >> /home/ec2-user/.ssh/authorized_keys && chmod 600 /home/ec2-user/.ssh/authorized_keys"
 
     - name: Copy over Jenkins Worker Node creation payload xml
       vars: 
@@ -25,7 +25,7 @@
 
     - name: Read generated private key id_rsa
       slurp:
-        src: /home/ec2-user/.ssh/id_rsa
+        src: /home/ec2-user/.ssh/jenkins_rsa
       register: pkey
 
     - name: Copy over creds.xml and create Jenkins credential
@@ -42,6 +42,7 @@
       vars:
         package:
         - wget
+        - curl
         - java-1.8.0-openjdk-devel
         - git
    

@@ -16,7 +16,7 @@
       
     - name: clone repo
       git:
-        repo: https://github.com/linuxacademy/content-terraform-jenkins.git
+        repo: https://github.com/adamkeinan/content-terraform-jenkins.git
         dest: /tmp/jenkins
 
     - name: Setup Jenkins Repo

@@ -11,7 +11,7 @@ resource "aws_vpc" "vpc_master" {
 }
 
 #Create VPC in us-west-2
-resource "aws_vpc" "vpc_master_oregon" {
+resource "aws_vpc" "vpc_master_ireland" {
   provider             = aws.region-worker
   cidr_block           = "172.31.0.0/16"
   enable_dns_support   = true
@@ -23,9 +23,9 @@ resource "aws_vpc" "vpc_master_oregon" {
 }
 
 #Initiate Peering connection request from us-east-1
-resource "aws_vpc_peering_connection" "uswest1-useast2" {
+resource "aws_vpc_peering_connection" "uswest1-useast1" {
   provider    = aws.region-master
-  peer_vpc_id = aws_vpc.vpc_master_oregon.id
+  peer_vpc_id = aws_vpc.vpc_master_ireland.id
   vpc_id      = aws_vpc.vpc_master.id
   #auto_accept = true
   peer_region = var.region-worker
@@ -39,9 +39,9 @@ resource "aws_internet_gateway" "igw" {
 }
 
 #Create IGW in us-west-2
-resource "aws_internet_gateway" "igw-oregon" {
+resource "aws_internet_gateway" "igw-ireland" {
   provider = aws.region-worker
-  vpc_id   = aws_vpc.vpc_master_oregon.id
+  vpc_id   = aws_vpc.vpc_master_ireland.id
 }
 
 #Accept VPC peering request in us-west-2 from us-east-1
@@ -101,19 +101,19 @@ resource "aws_subnet" "subnet_2" {
 
 
 #Create subnet in us-west-2
-resource "aws_subnet" "subnet_1_oregon" {
+resource "aws_subnet" "subnet_1_ireland" {
   provider   = aws.region-worker
-  vpc_id     = aws_vpc.vpc_master_oregon.id
+  vpc_id     = aws_vpc.vpc_master_ireland.id
   cidr_block = "192.168.1.0/24"
 }
 
 #Create route table in us-west-2
-resource "aws_route_table" "internet_route_oregon" {
+resource "aws_route_table" "internet_route_ireland" {
   provider = aws.region-worker
-  vpc_id   = aws_vpc.vpc_master_oregon.id
+  vpc_id   = aws_vpc.vpc_master_ireland.id
   route {
     cidr_block = "0.0.0.0/0"
-    gateway_id = aws_internet_gateway.igw-oregon.id
+    gateway_id = aws_internet_gateway.igw-ireland.id
   }
   route {
     cidr_block                = "10.0.1.0/24"
@@ -130,8 +130,8 @@ resource "aws_route_table" "internet_route_oregon" {
 #Overwrite default route table of VPC(Worker) with our route table entries
 resource "aws_main_route_table_association" "set-worker-default-rt-assoc" {
   provider       = aws.region-worker
-  vpc_id         = aws_vpc.vpc_master_oregon.id
-  route_table_id = aws_route_table.internet_route_oregon.id
+  vpc_id         = aws_vpc.vpc_master_virginia.id
+  route_table_id = aws_route_table.internet_route_virginia.id
 }
 
 
@@ -198,13 +198,13 @@ resource "aws_security_group" "lb-sg" {
   }
 }
 
-#Create SG for allowing TCP/22 from your IP in us-west-2
-resource "aws_security_group" "jenkins-sg-oregon" {
+#Create SG for allowing TCP/22 from your IP in us-east-1
+resource "aws_security_group" "jenkins-sg-virgina" {
   provider = aws.region-worker
 
-  name        = "jenkins-sg-oregon"
+  name        = "jenkins-sg-ireland"
   description = "Allow TCP/8080 & TCP/22"
-  vpc_id      = aws_vpc.vpc_master_oregon.id
+  vpc_id      = aws_vpc.vpc_master_ireland.id
   ingress {
     description = "Allow 22 from our public IP"
     from_port   = 22
