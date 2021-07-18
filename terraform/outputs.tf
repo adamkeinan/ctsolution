@@ -1,8 +1,8 @@
-output "amiId-us-east-1" {
+output "amiId-us-west-1" {
   value = data.aws_ssm_parameter.linuxAmi.value
 }
 
-output "amiId-us-west-2" {
+output "amiId-us-east-1" {
   value = data.aws_ssm_parameter.linuxAmiOregon.value
 }
 output "Jenkins-Main-Node-Public-IP" {

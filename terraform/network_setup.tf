@@ -61,7 +61,7 @@ resource "aws_route_table" "internet_route" {
   }
   route {
     cidr_block                = "192.168.1.0/24"
-    vpc_peering_connection_id = aws_vpc_peering_connection.uswest1-uswest2.id
+    vpc_peering_connection_id = aws_vpc_peering_connection.uswest1-useast.id
   }
   lifecycle {
     ignore_changes = all
@@ -117,7 +117,7 @@ resource "aws_route_table" "internet_route_oregon" {
   }
   route {
     cidr_block                = "10.0.1.0/24"
-    vpc_peering_connection_id = aws_vpc_peering_connection.uswest1-uswest2.id
+    vpc_peering_connection_id = aws_vpc_peering_connection.uswest1-useast1.id
   }
   lifecycle {
     ignore_changes = all

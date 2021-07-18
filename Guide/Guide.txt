@@ -370,9 +370,116 @@ Python 2.7.18
 [ec2-user@ip-ADDRESS ~]$ python3 --version
 Python 3.7.10
 
-- Ansible (install via pip) # pip3 install ansible --user
-- AWS CLI (install via pip) # pip3 install awscli --user 
-- jq (install via package manager) - OPTIONAL # sudo yum -y install jq
+- Install Ansible:
+## Ansible (install via pip) # pip3 install ansible --user
+Turn your user prevlige mode to root:
+$ sudo su
+
+- Enable the Extra Packages for Enterprise Linux (EPEL) repository by running the following command
+$ amazon-linux-extras install epel
+
+- Apply the updates to the packages:
+$ yum update -y
+
+- Install Ansible, NGINX, and Git:
+$ yum install ansible -y
+$ yum install nginx -y
+$ yum install git -y
+
+- Install the official Ansible role from NGINX, Inc.:
+$ ansible-galaxy install nginxinc.nginx
+- downloading role 'nginx', owned by nginxinc
+- downloading role from https://github.com/nginxinc/ansible-role-nginx/archive/0.20.0.tar.gz
+- extracting nginxinc.nginx to /home/ec2-user/.ansible/roles/nginxinc.nginx
+- nginxinc.nginx (0.20.0) was installed successfully
+## (NGINX Plus only) Copy the nginx-repo.key and nginx-repo.crt files provided by NGINX, Inc. to ~/.ssh/ngx-certs/.
+
+Configure NGINX to route traffic
+- Loctae your new aws app directory, cd into it and create an nginx and pass the configuration:
+$ cd aws-app
+$ vim nginx.conf
+
+- Install Node.js and set up the Express server:
+$ curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.34.0/install.sh | bash
+$ . ~/.nvm/nvm.sh
+$ nvm install node
+
+- Choose a location for the Express server. In this example, we create a directory called server to store the relevant files
+$ mkdir server && cd server
+$ npm install express
+
+## When the installation completes, we'll obtain the JavaScript file that contains the code to handle 
+## the webhook request.sample named app.js that runs a weather-app and ansible-pull command to pull 
+## and run the playbook.yml file from a GitHub repository
+
+- jq (install via package manager) - OPTIONAL # 
+$ sudo yum -y install jq
+
+- Create an SSH key on your instance. In this example, replace with your email address
+$ ssh-keygen -t rsa -b 4096 -C <your_email@example.com>
+
+Now we'll be able to add our public key to the authorized_keys file on the remote ec2 Instance on us-east-1
+$ ssh-copy-id -f us-east-1_USER@us-east-1_IP_ADDRESS
+
+- When the key is created, run the following code:
+$ eval "$(ssh-agent -s)" 
+## The output looks similar to this:
+## $ Agent pid 1111
+
+- Start NGINX
+$ systemctl start nginx 
+$ systemctl enable nginx
+
+- Let's make a ~/hosts file which will be used as an inventory for Ansible:
+[test]
+52.54.142.56
+
+[prod]
+18.209.15.95
+
+- Let's do a simple connection testing:
+ec2-user@IP_ADDRESS:~$ ls
+$ vim hosts
+
+$ ec2-user@IP_ADDRESS:~$ ansible -i hosts all -m ping -u ec2-user
+52.54.142.56 | SUCCESS => {
+    "changed": false, 
+    "ping": "pong"
+}
+18.209.15.95 | SUCCESS => {
+    "changed": false, 
+    "ping": "pong"
+}
+- Now lets Create a simple playbook called 'install_nginx.yaml' On our /terraform/ansible directory:
+$ vim Install_nginx.yaml
+---
+- hosts: localhost
+  become: true
+  roles:
+    - role: nginxinc.nginx
+
+- wq! to save
+
+- Run the playbook:
+$ ansible-playbook install_nginx.yaml
+
+- Now lets run our playbook
+$ ansible-playbook -i hosts -s -u ec2-user aws-app.yaml
+
+- Use the following basic configuration to listen on port 80 and route traffic to the port that the 
+Express server listens to
+
+Set up GitHub to configure the webhook
+- Log in to your GitHub account, and navigate to your repository settings > Deploy Keys
+- Add the deploy key from your aws-app/.ssh public key(.pub)
+
+- On the Webhooks tab, choose Add webhook
+- Copy and paste your EC2 instance’s public IP address into the Payload URL section
+## This response indicates that the Express server received the request
+
+- To start NGINX, use the following commands:
+$ systemctl start nginx
+$ systemctl enable nginx
 
 - We'll contunue by creating our Backend service using AWS S3API
 $ aws s3api create-bucket --bucket eksbackend --region eu-west-1 LocationConstraint=eu-west-1

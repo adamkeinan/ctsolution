@@ -4,7 +4,7 @@ data "aws_ssm_parameter" "linuxAmi" {
   name     = "/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2"
 }
 
-#Get Linux AMI ID using SSM Parameter endpoint in us-west-2
+#Get Linux AMI ID using SSM Parameter endpoint in us-west-1
 data "aws_ssm_parameter" "linuxAmiOregon" {
   provider = aws.region-worker
   name     = "/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2"
@@ -14,14 +14,14 @@ data "aws_ssm_parameter" "linuxAmiOregon" {
 resource "aws_key_pair" "master-key" {
   provider   = aws.region-master
   key_name   = "jenkins"
-  public_key = file("~/.ssh/id_rsa.pub")
+  public_key = file("~/.ssh/tfansKeyPair.pub")
 }
 
-#Create key-pair for logging into EC2 in us-west-2
+#Create key-pair for logging into EC2 in us-west-1
 resource "aws_key_pair" "worker-key" {
   provider   = aws.region-worker
   key_name   = "jenkins"
-  public_key = file("~/.ssh/id_rsa.pub")
+  public_key = file("~/.ssh/tfansKeyPair.pub")
 }
 
 #Create and bootstrap EC2 in us-east-1
@@ -63,7 +63,7 @@ resource "aws_instance" "jenkins-worker-oregon" {
     connection {
       type        = "ssh"
       user        = "ec2-user"
-      private_key = file("~/.ssh/id_rsa")
+      private_key = file("~/.ssh/tfansKeyPair")
       host        = self.public_ip
     }
   }
