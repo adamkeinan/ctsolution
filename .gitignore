@@ -53,3 +53,8 @@ development.env
 .ssh
 .ssh/**
 .aws
+node_modules
+build
+npm-debug.log
+.env
+**/node_modules/**/*
