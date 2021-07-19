@@ -53,3 +53,5 @@ development.env
 .ssh
 .ssh/**
 .aws
+*.tmp
+tmp.*
