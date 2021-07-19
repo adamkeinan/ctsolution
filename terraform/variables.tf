@@ -29,7 +29,7 @@ variable "region-master" {
 
 variable "region-worker" {
   type    = string
-  default = "us-east-1"
+  default = "us-west-2"
 }
 
 #How many Jenkins workers to spin up

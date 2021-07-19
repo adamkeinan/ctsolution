@@ -1,11 +1,11 @@
-#Get Linux AMI ID using SSM Parameter endpoint in ea-west-1
+#Get Linux AMI ID using SSM Parameter endpoint in eu-west-1
 data "aws_ssm_parameter" "linuxAmi" {
   provider = aws.region-master
   name     = "/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2"
 }
 
-#Get Linux AMI ID using SSM Parameter endpoint in us-east-1
-data "aws_ssm_parameter" "linuxAmiVirginia" {
+#Get Linux AMI ID using SSM Parameter endpoint in us-west-2
+data "aws_ssm_parameter" "linuxAmiOregon" {
   provider = aws.region-worker
   name     = "/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2"
 }
@@ -17,7 +17,7 @@ resource "aws_key_pair" "master-key" {
   public_key = file("~/.ssh/tfansKeyPair.pub")
 }
 
-#Create key-pair for logging into EC2 in us-east-1
+#Create key-pair for logging into EC2 in us-west-2
 resource "aws_key_pair" "worker-key" {
   provider   = aws.region-worker
   key_name   = "jenkins"
@@ -45,20 +45,20 @@ EOF
   depends_on = [aws_main_route_table_association.set-master-default-rt-assoc]
 }
 
-#Create EC2 in us-east-1
-resource "aws_instance" "jenkins-worker-virginia" {
+#Create EC2 in us-west-2
+resource "aws_instance" "jenkins-worker-oregon" {
   provider                    = aws.region-worker
   count                       = var.workers-count
-  ami                         = data.aws_ssm_parameter.linuxAmiVirginia.value
+  ami                         = data.aws_ssm_parameter.linuxAmiOregon.value
   instance_type               = var.instance-type
   key_name                    = aws_key_pair.worker-key.key_name
   associate_public_ip_address = true
-  vpc_security_group_ids      = [aws_security_group.jenkins-sg-virginia.id]
-  subnet_id                   = aws_subnet.subnet_1_virginia.id
+  vpc_security_group_ids      = [aws_security_group.jenkins-sg-oregon.id]
+  subnet_id                   = aws_subnet.subnet_1_oregon.id
   provisioner "remote-exec" {
     when = destroy
     inline = [
-      "java -jar /home/ec2-user/jenkins-cli.jar -auth @/home/ec2-user/jenkins_auth -s http://${aws_instance.jenkins-master.private_ip}:8080 -auth @/home/ec2-user/jenkins_auth delete-node ${self.private_ip}"
+      "java -jar /home/ec2-user/jenkins-cli.jar -auth @/home/ec2-user/jenkins_auth -s http://${self.private_ip}:8080 -auth @/home/ec2-user jenkins_auth delete-node ${self.private_ip}"
     ]
     connection {
       type        = "ssh"
