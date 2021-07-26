@@ -1,0 +1,24 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-deployment
+  labels:
+    run: nginx-ws-app
+spec:
+  replicas: 2 # Update the replicas from 1 to 2
+  selector:
+    matchLabels:
+      run: nginx-ws-app
+  template:
+    metadata:
+      labels:
+        run: nginx-ws-app
+    spec:
+      containers:
+      - name: nginx-ws
+        image: nginx:1.21 # upgraded from nginx:1.17
+        ports:
+        - containerPort: 80
+      - name: weather-app
+        image: adamakeinan/weather-app 

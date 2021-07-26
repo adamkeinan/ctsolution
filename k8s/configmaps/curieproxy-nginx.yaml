@@ -1,0 +1,65 @@
+apiVersion: v1
+data:
+  Dockerfile: |
+    ARG RUSTBIN_TAG=latest
+    FROM curiefense/curiefense-rustbuild-focal:${RUSTBIN_TAG} AS rustbin
+    FROM docker.io/openresty/openresty:focal
+    COPY conf.d /etc/nginx/conf.d
+    COPY curieproxy/lua /lua
+    COPY curieproxy/lua/shared-objects/*.so /usr/local/lib/lua/5.1/
+    COPY --from=rustbin /root/curiefense.so /usr/local/lib/lua/5.1/
+
+    COPY curieproxy/config /bootstrap-config/config
+
+    RUN apt-get update && apt-get install -y libhyperscan5 rsyslog
+    RUN mkdir /config && chmod a+rwxt /config
+    RUN openssl req -new -newkey rsa:4096 -days 3650 -nodes -x509 -subj "/C=fr/O=curiefense/CN=testsystem" -keyout /etc/ssl/certificate.key -out /etc/ssl/certificate.crt
+
+    RUN mkfifo /nginx-accesslogs
+
+    COPY start.sh /usr/bin/
+    COPY rsyslog.conf /etc/rsyslog.conf
+    CMD /bin/bash /usr/bin/start.sh
+  rsyslog.conf: |+
+    module(load="imuxsock") # provides support for local system logging
+    module(load="imudp")
+    input(type="imudp" port="514")
+
+    $FileOwner syslog
+    $FileGroup adm
+    $FileCreateMode 0640
+    $DirCreateMode 0755
+    $Umask 0022
+    $PrivDropToUser syslog
+    $PrivDropToGroup syslog
+    $WorkDirectory /var/spool/rsyslog
+
+    *.* /var/log/syslog
+    action(type="omfwd" Target="curielogger" Port="9514" Protocol="tcp")
+
+  start.sh: |
+    #!/bin/bash
+
+    rm -f /run/rsyslogd.pid
+    rsyslogd -n &
+
+    /usr/local/openresty/bin/openresty -g "daemon off;"
+kind: ConfigMap
+metadata:
+  creationTimestamp: "2021-07-26T07:10:57Z"
+  managedFields:
+  - apiVersion: v1
+    fieldsType: FieldsV1
+    fieldsV1:
+      f:data:
+        .: {}
+        f:Dockerfile: {}
+        f:rsyslog.conf: {}
+        f:start.sh: {}
+    manager: kubectl-create
+    operation: Update
+    time: "2021-07-26T07:10:57Z"
+  name: curieproxy-nginx
+  namespace: default
+  resourceVersion: "1546322"
+  uid: 6bf7d1de-1920-4801-ae05-690767605237

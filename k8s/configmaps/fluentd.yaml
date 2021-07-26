@@ -1,0 +1,33 @@
+apiVersion: v1
+data:
+  Dockerfile: |
+    FROM fluent/fluentd:v1.12-1
+
+    # Use root account to use apk
+    USER root
+
+    RUN apk add --no-cache --update --virtual .build-deps \
+            sudo build-base ruby-dev \
+     && sudo gem install fluent-plugin-elasticsearch \
+     && sudo gem sources --clear-all \
+     && apk del .build-deps \
+     && rm -rf /tmp/* /var/tmp/* /usr/lib/ruby/gems/*/cache/*.gem
+
+    USER fluent
+kind: ConfigMap
+metadata:
+  creationTimestamp: "2021-07-26T07:09:48Z"
+  managedFields:
+  - apiVersion: v1
+    fieldsType: FieldsV1
+    fieldsV1:
+      f:data:
+        .: {}
+        f:Dockerfile: {}
+    manager: kubectl-create
+    operation: Update
+    time: "2021-07-26T07:09:48Z"
+  name: fluentd
+  namespace: default
+  resourceVersion: "1546181"
+  uid: b94fc4e6-850e-4a54-9405-852b7239e36c

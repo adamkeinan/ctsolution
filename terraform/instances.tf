@@ -58,7 +58,11 @@ resource "aws_instance" "jenkins-worker-oregon" {
   provisioner "remote-exec" {
     when = destroy
     inline = [
+<<<<<<< HEAD
       "java -jar /home/ec2-user/jenkins-cli.jar -auth @/home/ec2-user/jenkins_auth -s http://${self.private_ip}:8080 -auth @/home/ec2-user jenkins_auth delete-node ${self.private_ip}"
+=======
+      "java -jar /home/ec2-user/jenkins-cli.jar -auth @/home/ec2-user/jenkins_auth -s http://${self.private_ip}:8080 -auth @/home/ec2-user/jenkins_auth delete-node ${self.private_ip}"
+>>>>>>> origin/main
     ]
     connection {
       type        = "ssh"

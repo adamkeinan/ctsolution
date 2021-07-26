@@ -1,0 +1,28 @@
+apiVersion: v1
+data:
+  Dockerfile: "FROM debian:buster\n\nARG DEBIAN_FRONTEND=noninteractive\n# bucket
+    credentials will be provided by docker-compose or k8s secrets, if needed\nRUN
+    ln -s /run/secrets/s3cfg/s3cfg /root/.s3cfg\n\nRUN apt-get update && \\\n    apt-get
+    -yq --no-install-recommends install \\\n\tdumb-init python3-pip python3-setuptools
+    python3-wheel python3-magic \\\n\tpython3-xattr python3-netifaces && \\\n\tapt-get
+    autoremove --purge -y && \\\n\trm -rf /var/lib/apt/lists/*\n\nCOPY curieconf-utils
+    /curieconf-utils\nRUN cd /curieconf-utils ; pip3 install --no-cache-dir .\nCOPY
+    curieconf-client /curieconf-client\nRUN cd /curieconf-client ; pip3 install --no-cache-dir
+    .\nCOPY init /init\n\nENTRYPOINT [\"/usr/bin/dumb-init\", \"/bin/bash\", \"/init/pull.sh\"]\n"
+kind: ConfigMap
+metadata:
+  creationTimestamp: "2021-07-26T07:09:27Z"
+  managedFields:
+  - apiVersion: v1
+    fieldsType: FieldsV1
+    fieldsV1:
+      f:data:
+        .: {}
+        f:Dockerfile: {}
+    manager: kubectl-create
+    operation: Update
+    time: "2021-07-26T07:09:27Z"
+  name: curiesync
+  namespace: default
+  resourceVersion: "1546138"
+  uid: a3bb218f-b135-4535-9830-b952b6f6382e

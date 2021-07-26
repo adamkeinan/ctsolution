@@ -1,0 +1,60 @@
+version: "3.9"
+services:  
+  web:    
+    restart: always
+    build: ./web
+    links: 
+      - postgres:postgres
+      - redis:redis
+    volumes:
+      - web-flask:/usr/src/service-counter
+    env_file: .env    
+    environment: 
+      DEBUG: 'true'
+      POSTGRES_USER: 'postgres'
+      POSTGRES_PASSWORD: 'postgres'    
+    profiles: ["web"]
+    ports: 
+      - "8001:5432"
+      - "5432:5432"   
+
+  backend: python  
+    image: python:3.9.5-alpine3.14    
+    profiles: ["backend"]                                     
+    ports:
+      - "5000:5000"     
+    links:
+      - backend:backend      
+    volumes:
+      - ./backend      
+    
+  nginx:      
+    restart: always
+    build: ./nginx/
+    ports:
+      - "8080:80"
+    volumes: 
+      - web-server:/nginx    
+    links:
+      - nginx:nginx
+  
+  postgres:      
+    restart: always
+    image: postgres:latest
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql                                                                                                                     
+
+  wethear-app: 
+    restart: always
+    image: adamakeinan/weather-app    
+    profiles: ["webapp"]  
+    volumes: 
+      - .:/db
+      - ./db/backend/nginx/site/weather-app      
+    command: sh -c "npm install && npm start"                                                                                                
+    args:                                                                                                                                           - VERSION=v4.0
+    ports:
+      - "8088:3005"  
+      - webserver

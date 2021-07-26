@@ -1,0 +1,407 @@
+---
+# Source: sonarqube/charts/postgresql/templates/secrets.yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: eks-sonarqube-postgresql
+  labels:
+    app: postgresql
+    chart: postgresql-8.6.4
+    release: "eks-sonarqube"
+    heritage: "Helm"
+type: Opaque
+data:
+  postgresql-password: "c29uYXJQYXNz"
+---
+# Source: sonarqube/templates/config.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: eks-sonarqube-sonarqube-config
+  labels:
+    app: sonarqube
+    chart: sonarqube-9.6.4
+    release: eks-sonarqube
+    heritage: Helm
+data:
+---
+# Source: sonarqube/templates/init-sysctl.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: eks-sonarqube-sonarqube-init-sysctl
+  labels:
+    app: sonarqube
+    chart: sonarqube-9.6.4
+    release: eks-sonarqube
+    heritage: Helm
+data:
+  init_sysctl.sh: |-
+    if [[ "$(sysctl -n vm.max_map_count)" -lt 524288 ]]; then
+      sysctl -w vm.max_map_count=524288
+    fi
+    if [[ "$(sysctl -n fs.file-max)" -lt 131072 ]]; then
+      sysctl -w fs.file-max=131072
+    fi
+    if [[ "$(ulimit -n)" != "unlimited" ]]; then
+      if [[ "$(ulimit -n)" -lt 131072 ]]; then
+        echo "ulimit -n 131072"
+        ulimit -n 131072
+      fi
+    fi
+    if [[ "$(ulimit -u)" != "unlimited" ]]; then
+      if [[ "$(ulimit -u)" -lt 8192 ]]; then
+        echo "ulimit -u 8192"
+        ulimit -u 8192
+      fi
+    fi
+---
+# Source: sonarqube/templates/install-plugins.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: eks-sonarqube-sonarqube-install-plugins
+  labels:
+    app: sonarqube
+    chart: sonarqube-9.6.4
+    release: eks-sonarqube
+    heritage: Helm
+data:
+  install_plugins.sh: |-
+---
+# Source: sonarqube/templates/postgres-config.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: eks-sonarqube-sonarqube-postgres-config
+  labels:
+    app: sonarqube
+    chart: sonarqube-9.6.4
+    release: eks-sonarqube
+    heritage: Helm
+data:
+  SONAR_JDBC_USERNAME: "sonarUser"
+  SONAR_JDBC_URL: "jdbc:postgresql://eks-sonarqube-postgresql:5432/sonarDB"
+---
+# Source: sonarqube/templates/tests/test-config.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: eks-sonarqube-sonarqube-tests
+  labels:
+    app: sonarqube
+    chart: sonarqube-9.6.4
+    release: eks-sonarqube
+    heritage: Helm
+data:
+  run.sh: |-
+    @test "Testing Sonarqube UI is accessible" {
+      curl --connect-timeout 5 --retry 12 --retry-delay 1 --retry-max-time 60 eks-sonarqube-sonarqube:9000/api/system/status
+    }
+---
+# Source: sonarqube/charts/postgresql/templates/svc-headless.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: eks-sonarqube-postgresql-headless
+  labels:
+    app: postgresql
+    chart: postgresql-8.6.4
+    release: "eks-sonarqube"
+    heritage: "Helm"
+spec:
+  type: ClusterIP
+  clusterIP: None
+  ports:
+    - name: tcp-postgresql
+      port: 5432
+      targetPort: tcp-postgresql
+  selector:
+    app: postgresql
+    release: "eks-sonarqube"
+---
+# Source: sonarqube/charts/postgresql/templates/svc.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: eks-sonarqube-postgresql
+  labels:
+    app: postgresql
+    chart: postgresql-8.6.4
+    release: "eks-sonarqube"
+    heritage: "Helm"
+spec:
+  type: ClusterIP
+  ports:
+    - name: tcp-postgresql
+      port: 5432
+      targetPort: tcp-postgresql
+  selector:
+    app: postgresql
+    release: "eks-sonarqube"
+    role: master
+---
+# Source: sonarqube/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: eks-sonarqube-sonarqube
+  labels:
+    app: sonarqube
+    chart: sonarqube-9.6.4
+    release: eks-sonarqube
+    heritage: Helm
+
+spec:
+  type: ClusterIP
+  ports:
+    - port: 9000
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app: sonarqube
+    release: eks-sonarqube
+---
+# Source: sonarqube/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: eks-sonarqube-sonarqube
+  labels:
+    app: sonarqube
+    chart: sonarqube-9.6.4
+    release: eks-sonarqube
+    heritage: Helm
+    app.kubernetes.io/name: sonarqube-eks-sonarqube-sonarqube
+    app.kubernetes.io/instance: eks-sonarqube
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/part-of: sonarqube
+    app.kubernetes.io/component: eks-sonarqube-sonarqube
+    app.kubernetes.io/version: "8.5.1-community"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sonarqube
+      release: eks-sonarqube
+  template:
+    metadata:
+      labels:
+        app: sonarqube
+        release: eks-sonarqube
+      annotations:
+        checksum/init-sysctl: bb3eb45b3b47714fae6b5f6635c42317583411dbbb9cce50825bc6c8be623128
+        checksum/plugins: 282d70c729fa1118a98c88f26a9c09d51562a3d302936c8013dcf4fdbdb8b510
+        checksum/config: ff91f6ed8be02e6d13ad08262db16bb78522d7d524c1e9984f8d0621ead478d8
+        checksum/secret: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+    spec:
+      securityContext:
+        fsGroup: 1000
+      initContainers:
+        - name: init-sysctl
+          image: busybox:1.32
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            privileged: true
+          resources:
+            {}
+          command: ["sh",
+            "-e",
+            "/tmp/scripts/init_sysctl.sh"]
+          volumeMounts:
+            - name: init-sysctl
+              mountPath: /tmp/scripts/      
+        - name: "wait-for-db"
+          image: busybox:1.32
+          imagePullPolicy: IfNotPresent
+          resources:
+            {}
+          command: ["/bin/sh", "-c", "for i in $(seq 1 200); do nc -z -w3 eks-sonarqube-postgresql 5432 && exit 0 || sleep 2; done; exit 1"]
+      containers:
+        - name: sonarqube
+          image: "sonarqube:8.5.1-community"
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 9000
+              protocol: TCP
+          env:
+            - name: SONAR_WEB_JAVAOPTS
+              value: ""
+            - name: SONAR_JDBC_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: eks-sonarqube-postgresql
+                  key: postgresql-password
+          envFrom:
+            - configMapRef:
+                name: eks-sonarqube-sonarqube-postgres-config
+          livenessProbe:
+            httpGet:
+              path: /api/system/status
+              port: http
+            initialDelaySeconds: 60
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /api/system/status
+              port: http
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            failureThreshold: 6
+          securityContext:
+            runAsUser: 1000
+          volumeMounts:
+            - mountPath: /opt/sonarqube/data
+              name: sonarqube
+              subPath: data
+            - mountPath: /opt/sonarqube/temp
+              name: sonarqube
+              subPath: temp
+            - mountPath: /opt/sonarqube/logs
+              name: sonarqube
+              subPath: logs
+            - mountPath: /tmp
+              name: tmp-dir
+          resources:
+            {}
+      volumes:
+      - name: init-sysctl
+        configMap:
+          name: eks-sonarqube-sonarqube-init-sysctl
+          items:
+            - key: init_sysctl.sh
+              path: init_sysctl.sh
+      - name: install-plugins
+        configMap:
+          name: eks-sonarqube-sonarqube-install-plugins
+          items:
+            - key: install_plugins.sh
+              path: install_plugins.sh
+      - name: sonarqube
+        emptyDir:
+          {}
+      - name : tmp-dir
+        emptyDir:
+          {}
+---
+# Source: sonarqube/charts/postgresql/templates/statefulset.yaml
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: eks-sonarqube-postgresql
+  labels:
+    app: postgresql
+    chart: postgresql-8.6.4
+    release: "eks-sonarqube"
+    heritage: "Helm"
+spec:
+  serviceName: eks-sonarqube-postgresql-headless
+  replicas: 1
+  updateStrategy:
+    type: RollingUpdate
+  selector:
+    matchLabels:
+      app: postgresql
+      release: "eks-sonarqube"
+      role: master
+  template:
+    metadata:
+      name: eks-sonarqube-postgresql
+      labels:
+        app: postgresql
+        chart: postgresql-8.6.4
+        release: "eks-sonarqube"
+        heritage: "Helm"
+        role: master
+    spec:      
+      securityContext:
+        fsGroup: 1001
+      initContainers:
+        # - name: do-something
+        #   image: busybox
+        #   command: ['do', 'something']
+        
+      containers:
+        - name: eks-sonarqube-postgresql
+          image: docker.io/bitnami/postgresql:11.7.0-debian-10-r26
+          imagePullPolicy: "IfNotPresent"
+          resources:
+            limits:
+              cpu: 2
+              memory: 2Gi
+            requests:
+              cpu: 100m
+              memory: 200Mi
+          securityContext:
+            runAsUser: 1001
+          env:
+            - name: BITNAMI_DEBUG
+              value: "false"
+            - name: POSTGRESQL_PORT_NUMBER
+              value: "5432"
+            - name: POSTGRESQL_VOLUME_DIR
+              value: "/bitnami/postgresql"
+            - name: PGDATA
+              value: "/bitnami/postgresql/data"
+            - name: POSTGRES_USER
+              value: "sonarUser"
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: eks-sonarqube-postgresql
+                  key: postgresql-password
+            - name: POSTGRES_DB
+              value: "sonarDB"
+            - name: POSTGRESQL_ENABLE_LDAP
+              value: "no"
+          ports:
+            - name: tcp-postgresql
+              containerPort: 5432
+          livenessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - exec pg_isready -U "sonarUser" -d "sonarDB" -h 127.0.0.1 -p 5432
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            successThreshold: 1
+            failureThreshold: 6
+          readinessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - -e
+                - |
+                  exec pg_isready -U "sonarUser" -d "sonarDB" -h 127.0.0.1 -p 5432
+                  [ -f /opt/bitnami/postgresql/tmp/.initialized ] || [ -f /bitnami/postgresql/.initialized ]
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 5
+            successThreshold: 1
+            failureThreshold: 6
+          volumeMounts:
+            - name: dshm
+              mountPath: /dev/shm
+            - name: data
+              mountPath: /bitnami/postgresql
+              subPath: 
+      volumes:
+        - name: dshm
+          emptyDir:
+            medium: Memory
+            sizeLimit: 1Gi
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes:
+          - "ReadWriteOnce"
+        resources:
+          requests:
+            storage: "20Gi"
+

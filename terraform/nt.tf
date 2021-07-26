@@ -1,4 +1,4 @@
-#Create VPC in eu-west-1
+#Create VPC in us-east-1
 resource "aws_vpc" "vpc_master" {
   provider             = aws.region-master
   cidr_block           = "10.0.0.0/16"
@@ -22,8 +22,8 @@ resource "aws_vpc" "vpc_master_oregon" {
 
 }
 
-#Initiate Peering connection request from eu-west-1
-resource "aws_vpc_peering_connection" "useast1-uswest2" {
+#Initiate Peering connection request from us-east-1
+resource "aws_vpc_peering_connection" "uswest1-uswest2" {
   provider    = aws.region-master
   peer_vpc_id = aws_vpc.vpc_master_oregon.id
   vpc_id      = aws_vpc.vpc_master.id
@@ -32,7 +32,7 @@ resource "aws_vpc_peering_connection" "useast1-uswest2" {
 
 }
 
-#Create IGW in eu-west-1
+#Create IGW in us-east-1
 resource "aws_internet_gateway" "igw" {
   provider = aws.region-master
   vpc_id   = aws_vpc.vpc_master.id
@@ -44,14 +44,14 @@ resource "aws_internet_gateway" "igw-oregon" {
   vpc_id   = aws_vpc.vpc_master_oregon.id
 }
 
-#Accept VPC peering request in us-west-2 from eu-west-1
+#Accept VPC peering request in us-west-2 from us-east-1
 resource "aws_vpc_peering_connection_accepter" "accept_peering" {
   provider                  = aws.region-worker
-  vpc_peering_connection_id = aws_vpc_peering_connection.useast1-uswest2.id
+  vpc_peering_connection_id = aws_vpc_peering_connection.uswest1-uswest2.id
   auto_accept               = true
 }
 
-#Create route table in eu-west-1
+#Create route table in us-east-1
 resource "aws_route_table" "internet_route" {
   provider = aws.region-master
   vpc_id   = aws_vpc.vpc_master.id
@@ -61,7 +61,7 @@ resource "aws_route_table" "internet_route" {
   }
   route {
     cidr_block                = "192.168.1.0/24"
-    vpc_peering_connection_id = aws_vpc_peering_connection.useast1-uswest2.id
+    vpc_peering_connection_id = aws_vpc_peering_connection.uswest1-uswest2.id
   }
   lifecycle {
     ignore_changes = all
@@ -83,7 +83,7 @@ data "aws_availability_zones" "azs" {
   state    = "available"
 }
 
-#Create subnet # 1 in eu-west-1
+#Create subnet # 1 in us-east-1
 resource "aws_subnet" "subnet_1" {
   provider          = aws.region-master
   availability_zone = element(data.aws_availability_zones.azs.names, 0)
@@ -91,7 +91,7 @@ resource "aws_subnet" "subnet_1" {
   cidr_block        = "10.0.1.0/24"
 }
 
-#Create subnet #2  in eu-west-1
+#Create subnet #2  in us-east-1
 resource "aws_subnet" "subnet_2" {
   provider          = aws.region-master
   vpc_id            = aws_vpc.vpc_master.id
@@ -117,7 +117,7 @@ resource "aws_route_table" "internet_route_oregon" {
   }
   route {
     cidr_block                = "10.0.1.0/24"
-    vpc_peering_connection_id = aws_vpc_peering_connection.useast1-uswest2.id
+    vpc_peering_connection_id = aws_vpc_peering_connection.uswest1-uswest2.id
   }
   lifecycle {
     ignore_changes = all
@@ -161,7 +161,7 @@ resource "aws_security_group" "jenkins-sg" {
     to_port     = 0
     protocol    = "-1"
     cidr_blocks = ["192.168.1.0/24"]
-    }
+  }
   egress {
     from_port   = 0
     to_port     = 0
@@ -213,7 +213,7 @@ resource "aws_security_group" "jenkins-sg-oregon" {
     cidr_blocks = [var.external_ip]
   }
   ingress {
-    description = "Allow traffic from eu-west-1"
+    description = "Allow traffic from us-east-1"
     from_port   = 0
     to_port     = 0
     protocol    = "-1"

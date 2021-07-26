@@ -1,0 +1,29 @@
+apiVersion: v1
+data:
+  Dockerfile: "FROM tiangolo/uwsgi-nginx-flask:python3.8\n\nRUN ln -sf /bootstrap/initial-bucket-export.conf
+    /etc/supervisor/conf.d/initial-bucket-export.conf\nRUN ln -sf /init/nginx.conf
+    /etc/nginx/conf.d/nginx.conf\nRUN ln -sf /init/uwsgi.conf /etc/uwsgi/uwsgi.ini\nRUN
+    ln -sf /run/secrets/s3cfg/s3cfg /root/.s3cfg\nRUN ln -sf /init/prestart.sh /app/prestart.sh\nRUN
+    ln -sf /curieconf-server/app/main.py /app/main.py\nRUN mkdir /uwsgi\nRUN chown
+    nginx /uwsgi\n\nRUN /usr/bin/apt-get update && \\\n    /usr/bin/apt-get install
+    -yq --no-install-recommends dumb-init && \\\n\trm -rf /var/lib/apt/lists/*\n\nCOPY
+    bootstrap /bootstrap\nCOPY init /init\nCOPY curieconf-utils /curieconf-utils\nRUN
+    cd /curieconf-utils ; pip3 install --no-cache-dir .\nCOPY curieconf-server /curieconf-server\nRUN
+    cd /curieconf-server ; pip3 install --no-cache-dir .\n"
+kind: ConfigMap
+metadata:
+  creationTimestamp: "2021-07-26T07:12:16Z"
+  managedFields:
+  - apiVersion: v1
+    fieldsType: FieldsV1
+    fieldsV1:
+      f:data:
+        .: {}
+        f:Dockerfile: {}
+    manager: kubectl-create
+    operation: Update
+    time: "2021-07-26T07:12:16Z"
+  name: confserver
+  namespace: default
+  resourceVersion: "1546474"
+  uid: 4e19d2cf-25c7-49b8-824d-4206d58cce5e

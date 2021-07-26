@@ -1,0 +1,31 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-ws-app
+  labels:
+    run: nginx-ws-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      run: nginx-ws-app
+  template:
+    metadata:
+      labels:
+        run: nginx-ws-app
+    spec:
+      containers:
+        - name: nginx-webserver
+          image: nginx:1.17
+          ports:
+            - containerPort: 8080
+        - name: weather-app
+          image: adamakeinan/weather-app 
+          ports:
+            - containerPort: 3005  
+        - name: aws-app
+          image: adamakeinan/weather-app 
+          ports:
+            - containerPort: 8088        
+

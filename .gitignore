@@ -58,3 +58,9 @@ build
 npm-debug.log
 .env
 **/node_modules/**/*
+*.tmp
+tmp.*
+*.swn
+*.swo
+*.swp
+

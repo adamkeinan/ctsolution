@@ -620,10 +620,6 @@ Express server listens to
 
 This response indicates that the Express server received the request
 
-- To start NGINX, use the following commands:
-
-$ systemctl start nginx
-$ systemctl enable nginx
 
 - We'll contunue by creating our Backend service using AWS S3API
 
@@ -661,6 +657,12 @@ Deploying the Terraform Code
 - Initialize the Terraform directory you changed into to download the required provider:
 
 $ terraform init
+Terraform has been successfully initialized!
+
+You may now begin working with Terraform. Try running "terraform plan" to see
+any changes that are required for your infrastructure. All Terraform commands
+should now work.
+
 
 - Ensure Terraform code is properly formatted:
 
@@ -669,10 +671,33 @@ $ terraform fmt
 - Ensure code has proper syntax and no errors:
 
 $ terraform validate
+Success! The configuration is valid.
 
 - See the execution plan and note the number of resources that will be created:
 
 $ terraform plan
+Terraform used the selected providers to generate the following execution plan. Resource actions are indicated with the following symbols:
+  + create
+
+Afer initiating our Cluster successfully in Two different ways its time to test our web applications
+
+## Connecting Applications with Services Using Kubernetes 
+### Objectives : 
+
+- Deploy an nginx webserver with three replica sets for each microservice
+- Deploy an pre-exiting Docker images to our pods:
+  -- aws-app
+  -- weather-app
+- Expose our app and test their connectivity
+- Upgrade the version of the weather-app in zero downtime
+
+- Connect to your EC2 Host via ssh and navigate to the repository directory "/k8s/"
+- Start by applying to "k8s" Directory. There you will see a simple nginx deployments & services yaml files.
+- First, We will run a basic deployment of One replica as dev, for the initial version(1.0.0):
+  
+  $ 
+
+
 
 ## Conclusion
 

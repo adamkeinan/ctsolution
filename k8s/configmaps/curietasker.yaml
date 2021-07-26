@@ -1,0 +1,29 @@
+apiVersion: v1
+data:
+  Dockerfile: "FROM debian:buster\n\nARG DEBIAN_FRONTEND=noninteractive\n\nRUN apt-get
+    update && \\\n    apt-get -yq --no-install-recommends install \\\n\tdumb-init
+    python3-pip python3-setuptools python3-wheel python3-magic \\\n\tpython3-xattr
+    python3-netifaces curl && \\\n\tapt-get autoremove --purge -y && \\\n\trm -rf
+    /var/lib/apt/lists/*\n\nCOPY curieconf-server/curieconf/confserver/json/tag-rules.schema
+    /tag-rules.schema\nCOPY curieconf-utils /curieconf-utils\nRUN cd /curieconf-utils
+    ; pip3 install --no-cache-dir .\nCOPY curieconf-client /curieconf-client\nRUN
+    cd /curieconf-client ; pip3 install --no-cache-dir .\nCOPY curietasker /curietasker\nRUN
+    cd /curietasker ; pip3 install --no-cache-dir .\nCOPY init /init\n\nENTRYPOINT
+    [\"/usr/bin/dumb-init\", \"/bin/bash\", \"/init/run.sh\"]\n\n"
+kind: ConfigMap
+metadata:
+  creationTimestamp: "2021-07-26T07:10:38Z"
+  managedFields:
+  - apiVersion: v1
+    fieldsType: FieldsV1
+    fieldsV1:
+      f:data:
+        .: {}
+        f:Dockerfile: {}
+    manager: kubectl-create
+    operation: Update
+    time: "2021-07-26T07:10:38Z"
+  name: curietasker
+  namespace: default
+  resourceVersion: "1546283"
+  uid: 2155502b-c549-4e7e-ba75-28835bc6cdc2

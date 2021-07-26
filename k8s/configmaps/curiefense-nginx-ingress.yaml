@@ -1,0 +1,19 @@
+kind: ConfigMap
+metadata:
+  creationTimestamp: "2021-07-26T06:48:36Z"
+  managedFields:
+  - apiVersion: v1
+    fieldsType: FieldsV1
+    fieldsV1:
+      f:data:    
+        .: {}
+        f:Dockerfile: {}        
+        f:curiefense-nginx.sh: {}
+        f:rsyslog.conf: {}        
+        manager: kubectl-create                          
+        operation: Update                               
+        time: "2021-07-26T06:48:36Z"                         
+        name: curiefense-nginx-ingress                                    
+        namespace: default                                      
+        resourceVersion: "1543710"                          
+        uid: 7713b8ff-726b-4fd8-8a78-5e4522b95d56
